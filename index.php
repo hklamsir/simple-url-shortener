@@ -53,9 +53,9 @@ if (isset($_SESSION['flash_message'])) {
                             <div id="qrcode-container">
                                 <div id="qrcode"></div>
                             </div>
-                            <p id="message" style="color: #27ae60; font-weight: bold;">生成成功！</p>
+                            <!-- 舊的 message 元素已被移除 -->
                         <?php else: // 'error' ?>
-                            <p id="message" style="color: #e74c3c; font-weight: bold;"><?php echo htmlspecialchars($flash_message['text']); ?></p>
+                            <p style="color: #e74c3c; font-weight: bold;"><?php echo htmlspecialchars($flash_message['text']); ?></p>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -71,14 +71,12 @@ if (isset($_SESSION['flash_message'])) {
             </div>
         </main>
 
-        <!-- 更新：連結容器 -->
         <div class="sub-links-container">
             <a href="term_of_use.php">服務條款</a>
             <a href="report.php">檢舉惡意連結</a>
         </div>
 
         <?php 
-            // 引入共用的頁尾檔案
             if (file_exists('templates/footer.php')) {
                 require_once 'templates/footer.php';
             }
