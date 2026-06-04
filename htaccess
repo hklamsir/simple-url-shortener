@@ -1,0 +1,44 @@
+# /.htaccess
+
+# 啟用重寫引擎
+RewriteEngine On
+
+# 禁止直接訪問敏感檔案
+<FilesMatch "^(config\.php|config\.sample\.php|reset_password\.php)$">
+    Require all denied
+</FilesMatch>
+
+# 禁止訪問隱藏檔案（如 .git, .env, .htaccess 本身）
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# --- URL 重寫規則 ---
+
+# 將 /{short_code} 重寫為 /redirect.php?code={short_code}
+# 短代碼格式：2-8 位字母數字（含大小寫和連字號）
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-zA-Z0-9_-]{2,8})$ redirect.php?code=$1 [L,QSA]
+
+# --- 安全標頭 ---
+
+# 防止 MIME 類型嗅探
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    # 防止點擊劫持
+    Header set X-Frame-Options "SAMEORIGIN"
+    # XSS 防護
+    Header set X-XSS-Protection "1; mode=block"
+    # Referrer 策略
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 禁止 PHP 在上傳目錄中執行（如果未來有上傳功能）
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # 如果有 uploads 目錄，取消下面的註解
+    # RewriteRule ^uploads/.*\.php$ - [F,L]
+</IfModule>
+
+php_value date.timezone Asia/Hong_Kong
