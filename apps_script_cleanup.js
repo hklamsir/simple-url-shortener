@@ -1,7 +1,7 @@
 // Google Apps Script
 
 // 請將下面的 URL 和密鑰替換為您自己的設定
-const CLEANUP_URL = "http://您的網域/cron_cleanup.php";
+const CLEANUP_URL = "https://您的網域/cron_cleanup.php";
 const SECRET_KEY = "您在 config.php 中設定的密鑰";
 
 /**
@@ -22,6 +22,9 @@ function runCleanup() {
     const options = {
       'method' : 'get',
       'muteHttpExceptions': true // 即使發生錯誤，也繼續執行以記錄錯誤訊息
+      'headers': {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*'
     };
     
     const response = UrlFetchApp.fetch(fullUrl, options);
