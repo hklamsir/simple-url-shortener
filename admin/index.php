@@ -48,8 +48,18 @@
                 require_once '../config.php'; 
                 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                     // --- 未登入狀態 ---
-                    $login_error = isset($_GET['error']) ? '密碼錯誤，請重試。' : '';
-                    echo '<div class="container"><h1>管理後台登入</h1><form class="login-form" action="auth.php" method="post"><input type="password" name="password" placeholder="請輸入管理密碼" required autofocus><button type="submit" name="login">登入</button></form>';
+                    // 安全修復：支援登入速率限制的錯誤訊息
+                    $login_error = '';
+                    if (isset($_GET['error'])) {
+                        if ($_GET['error'] === 'locked') {
+                            $minutes = isset($_GET['minutes']) ? intval($_GET['minutes']) : 15;
+                            $login_error = "登入嘗試次數過多，請等待 {$minutes} 分鐘後再試。";
+                        } else {
+                            $attempts_info = isset($_GET['attempts_left']) ? "（剩餘嘗試次數：" . intval($_GET['attempts_left']) . "）" : "";
+                            $login_error = '密碼錯誤，請重試。' . $attempts_info;
+                        }
+                    }
+                    echo '<div class="container"><h1>管理後台登入</h1><form class="login-form" action="auth.php" method="post"><input type="hidden" name="csrf_token" value="' . generate_csrf_token() . '"><input type="password" name="password" placeholder="請輸入管理密碼" required autofocus><button type="submit" name="login">登入</button></form>';
                     if ($login_error) echo '<p class="error-message">' . $login_error . '</p>';
                     echo '</div>';
                 } else {
@@ -106,6 +116,9 @@
         // 只有在登入狀態下，才載入彈出視窗的 HTML 和相關的 JS 檔案
         if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true): 
     ?>
+        <!-- CSRF Token 供 JS API 呼叫使用 -->
+        <meta name="csrf-token" content="<?php echo generate_csrf_token(); ?>">
+
         <!-- 檢舉紀錄彈出視窗 -->
         <div id="report-modal" class="modal-overlay hidden">
             <div class="modal-content">

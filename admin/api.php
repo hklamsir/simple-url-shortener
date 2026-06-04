@@ -11,6 +11,16 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit();
 }
 
+// 安全修復：寫入操作（POST）需驗證 CSRF Token
+$write_actions = ['delete_report', 'delete_link', 'update_password', 'add_custom_url', 'update_custom_url'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, $write_actions)) {
+    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!verify_csrf_token($csrf_token)) {
+        echo json_encode(['success' => false, 'message' => 'CSRF 驗證失敗']);
+        exit();
+    }
+}
+
 $conn = get_db_connection();
 if (!$conn) {
     echo json_encode(['success' => false, 'message' => '資料庫連線失敗']);

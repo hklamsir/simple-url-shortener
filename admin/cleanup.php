@@ -14,6 +14,10 @@ $deleted_urls = 0;
 $deleted_access_logs = "自動處理"; // 預設訊息
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['start_cleanup'])) {
+    // 安全修復：驗證 CSRF Token
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        $message = "安全驗證失敗，請重新提交。";
+    } else {
     $conn = get_db_connection();
     if ($conn) {
         try {
@@ -21,30 +25,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['start_cleanup'])) {
             $conn->query("DELETE FROM rate_limits WHERE request_time < NOW() - INTERVAL 24 HOUR");
             $deleted_rate_limits = $conn->affected_rows;
 
-            // 2. 查找並刪除過期的非自訂短網址
-            // 修正：重寫 SQL 查詢以正確使用 HAVING 子句
+            // 2. 查找並刪除過期或超過 100 天未使用的非自訂短網址
+            // 修正：與 cron_cleanup.php 保持一致，加入 expires_at 過期條件
             $find_query = "
-                SELECT su.url_id 
-                FROM short_urls su
+                SELECT su.url_id FROM short_urls su
                 LEFT JOIN access_logs al ON su.url_id = al.url_id
-                WHERE 
-                    su.is_custom = 0 
-                GROUP BY 
-                    su.url_id, su.created_at, su.expires_at
+                WHERE su.is_custom = 0
+                GROUP BY su.url_id, su.created_at, su.expires_at
                 HAVING
-                    -- 條件 A: 連結已達到設定的過期時間
                     (su.expires_at IS NOT NULL AND su.expires_at < NOW())
                     OR
-                    -- 條件 B: 連結超過 100 天未被使用
-                    (
-                        MAX(al.access_time) < NOW() - INTERVAL 100 DAY
-                        OR
-                        (MAX(al.access_time) IS NULL AND su.created_at < NOW() - INTERVAL 100 DAY)
-                    )
+                    (MAX(al.access_time) < NOW() - INTERVAL 100 DAY
+                    OR (MAX(al.access_time) IS NULL AND su.created_at < NOW() - INTERVAL 100 DAY))
             ";
             
             $result = $conn->query($find_query);
             $ids_to_delete = [];
+            // 增加對查詢結果的檢查，防止 $result 為 false 時出錯
             if ($result && $result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
                     $ids_to_delete[] = $row['url_id'];
@@ -52,9 +49,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['start_cleanup'])) {
             }
 
             if (!empty($ids_to_delete)) {
-                $id_list = implode(',', $ids_to_delete);
-                $conn->query("DELETE FROM short_urls WHERE url_id IN ($id_list)");
-                $deleted_urls = $conn->affected_rows;
+                // 安全修復：使用 prepared statement 取代直接拼接，防止 SQL 注入
+                $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
+                $types = str_repeat('i', count($ids_to_delete));
+                $stmt = $conn->prepare("DELETE FROM short_urls WHERE url_id IN ($placeholders)");
+                $stmt->bind_param($types, ...$ids_to_delete);
+                $stmt->execute();
+                $deleted_urls = $stmt->affected_rows;
+                $stmt->close();
             }
             
             $message = "數據清理完成！";
@@ -67,6 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['start_cleanup'])) {
     } else {
         $message = "資料庫連線失敗。";
     }
+    } // end CSRF else
 }
 ?>
 <!DOCTYPE html>
@@ -100,18 +103,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['start_cleanup'])) {
                     <div class="cleanup-rules">
                         <h3>清理規則說明：</h3>
                         <ul>
-                            <li><b>短網址：</b>將刪除所有符合以下任一條件的**非自訂**短網址：
-                                <ul style="margin-top: 0.5rem;">
-                                    <li>已達到您設定的「有效期限」。</li>
-                                    <li>超過 100 天未被使用。</li>
-                                </ul>
-                            </li>
+                            <li><b>短網址：</b>刪除所有非自訂且超過 100 天未被使用的短網址。</li>
                             <li><b>存取日誌：</b>當相關的短網址被刪除時，其對應的存取日誌將會被自動清除。</li>
                             <li><b>請求頻率紀錄：</b>刪除所有超過 24 小時的請求紀錄。</li>
                         </ul>
                         <p><strong>注意：</strong>此操作將會永久刪除資料且無法復原，請謹慎操作。</p>
                     </div>
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                         <button type="submit" name="start_cleanup" style="background-color: #dc3545;">開始清理</button>
                     </form>
                 </div>

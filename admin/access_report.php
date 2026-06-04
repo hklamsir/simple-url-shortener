@@ -37,6 +37,7 @@ $logs = $stmt->get_result();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>存取紀錄匯報</title>
+    <meta name="csrf-token" content="<?php echo generate_csrf_token(); ?>">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
@@ -251,17 +252,25 @@ $logs = $stmt->get_result();
             }
 
             async function showClickDetails(shortCode) {
+                // 安全修復：HTML 轉義函數，防止 XSS 攻擊
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
                 modalShortcodeSpan.textContent = shortCode;
                 modalContentDiv.innerHTML = '<p>載入中...</p>';
                 modal.classList.remove('hidden');
 
                 try {
-                    const response = await fetch(`api.php?action=get_url_click_details&short_code=${shortCode}`);
+                    const response = await fetch(`api.php?action=get_url_click_details&short_code=${encodeURIComponent(shortCode)}`);
                     const result = await response.json();
                     if (result.success && result.details.length > 0) {
                         let tableHtml = '<table class="details-table"><thead><tr><th>IP 位址</th><th>User Agent</th></tr></thead><tbody>';
                         result.details.forEach(detail => {
-                            tableHtml += `<tr><td>${detail.ip_address}</td><td>${detail.user_agent}</td></tr>`;
+                            // 安全修復：對用戶提供的數據進行 HTML 轉義，防止 XSS
+                            tableHtml += `<tr><td>${escapeHtml(detail.ip_address)}</td><td>${escapeHtml(detail.user_agent)}</td></tr>`;
                         });
                         tableHtml += '</tbody></table>';
                         modalContentDiv.innerHTML = tableHtml;
