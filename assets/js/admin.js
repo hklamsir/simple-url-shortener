@@ -3,7 +3,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalLinksEl = document.getElementById('total-links');
     const linksTableBody = document.getElementById('links-table-body');
     let clicksChart;
-    let currentModalUrlId = null; // 新增：用於追蹤當前彈出視窗顯示的是哪個 URL 的檢舉
+    let currentModalUrlId = null;
+
+    // 安全修復：取得 CSRF Token
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.content : '';
+    }
+
+    // 安全修復：附帶 CSRF Token 的 POST 請求
+    async function csrfFetch(url, options = {}) {
+        options.headers = options.headers || {};
+        options.headers['X-CSRF-Token'] = getCsrfToken();
+        return fetch(url, options);
+    }
 
     if (totalLinksEl && linksTableBody) {
         const reportModal = document.getElementById('report-modal');
@@ -59,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 刪除主連結
         async function deleteLink(linkId) {
             try {
-                const response = await fetch('api.php?action=delete_link', {
+                const response = await csrfFetch('api.php?action=delete_link', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: linkId })
@@ -74,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 刪除單筆檢舉
         async function deleteReport(reportId) {
             try {
-                const response = await fetch('api.php?action=delete_report', {
+                const response = await csrfFetch('api.php?action=delete_report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ report_id: reportId })
