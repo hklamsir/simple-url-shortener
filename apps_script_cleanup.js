@@ -21,15 +21,21 @@ function runCleanup() {
   try {
     const options = {
       'method' : 'get',
-      'muteHttpExceptions': true // 即使發生錯誤，也繼續執行以記錄錯誤訊息
+      'muteHttpExceptions': true, // 即使發生錯誤，也繼續執行以記錄錯誤訊息
       'headers': {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/json, text/plain, */*'
+      }
     };
     
     const response = UrlFetchApp.fetch(fullUrl, options);
     const responseCode = response.getResponseCode();
     const responseText = response.getContentText();
+
+    // 🔍 除錯：記錄回應內容
+    Logger.log('URL: ' + fullUrl);
+    Logger.log('Response Code: ' + responseCode);
+    Logger.log('Response (first 500 chars): ' + responseText.substring(0, 500));
     
     let status = '失敗';
     let message = `HTTP 狀態碼: ${responseCode}`;
