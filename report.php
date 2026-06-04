@@ -1,5 +1,5 @@
 <!-- /report.php -->
-<?php session_start(); ?>
+<?php session_start(); require_once 'config.php'; ?>
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -85,6 +85,7 @@
                 ?>
 
                 <form action="submit_report.php" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     <div class="report-form-group">
                         <label for="short_url">要檢舉的短網址：</label>
                         <input type="url" name="short_url" id="short_url" placeholder="例如：http://yourdomain.com/XyZab" required>

@@ -1,6 +1,7 @@
 <?php
 // 在頁面最頂部啟用 session
 session_start();
+require_once 'config.php';
 
 // 從 session 中讀取統一的 flash message
 $flash_message = null;
@@ -26,6 +27,7 @@ if (isset($_SESSION['flash_message'])) {
                 <p>一個快速、免費且開源的短網址生成器。</p>
 
                 <form id="shorten-form" action="shortener.php" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     <input type="url" name="url" id="original-url" placeholder="請在此貼上您的長網址" required>
                     <div class="form-group">
                         <label for="expiration"><i class="fa-solid fa-calendar-days" style="margin-right: 0.5rem;"></i>有效期限：</label>

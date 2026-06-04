@@ -11,9 +11,9 @@ if (!defined('CRON_SECRET_KEY') || empty(CRON_SECRET_KEY)) {
     exit();
 }
 
-// 從 GET 請求中獲取密鑰並進行驗證
+// 從 GET 請求中獲取密鑰並進行安全驗證（使用恒定時間比較防止時序攻擊）
 $provided_key = $_GET['key'] ?? '';
-if ($provided_key !== CRON_SECRET_KEY) {
+if (!hash_equals(hash('sha256', CRON_SECRET_KEY), hash('sha256', $provided_key))) {
     http_response_code(403); // Forbidden
     echo json_encode(['status' => 'error', 'message' => '未授權的存取。']);
     exit();
@@ -67,9 +67,14 @@ if ($conn) {
         }
 
         if (!empty($ids_to_delete)) {
-            $id_list = implode(',', $ids_to_delete);
-            $conn->query("DELETE FROM short_urls WHERE url_id IN ($id_list)");
-            $response['deleted_urls'] = $conn->affected_rows;
+            // 安全修復：使用 prepared statement 取代直接拼接，防止 SQL 注入
+            $placeholders = implode(',', array_fill(0, count($ids_to_delete), '?'));
+            $types = str_repeat('i', count($ids_to_delete));
+            $stmt = $conn->prepare("DELETE FROM short_urls WHERE url_id IN ($placeholders)");
+            $stmt->bind_param($types, ...$ids_to_delete);
+            $stmt->execute();
+            $response['deleted_urls'] = $stmt->affected_rows;
+            $stmt->close();
         }
         
         $response['status'] = 'success';

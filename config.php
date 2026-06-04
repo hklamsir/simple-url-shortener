@@ -1,29 +1,28 @@
 <?php
-// /config.sample.php
-// 本檔案為配置範本，請複製為 config.php 並填入您的實際資料
+// /config.php
 
 // --- 資料庫設定 ---
-// 請根據您自己的資料庫資訊修改
-define('DB_HOST', 'localhost');
-define('DB_USER', 'your_db_user');
-define('DB_PASS', 'your_db_password');
-define('DB_NAME', 'your_db_name');
+// 請根據您在 InfinityFree 上的資料庫資訊修改
+define('DB_HOST', 'sql112.infinityfree.com'); // e.g., sql201.infinityfree.com
+define('DB_USER', 'if0_35608548');          // e.g., if0_12345678
+define('DB_PASS', 'LSTzd8bE15o');         // 您的資料庫密碼
+define('DB_NAME', 'if0_35608548_short_url'); // 您的資料庫名稱
 
 // --- 網站設定 ---
 // 您的網站主域名，結尾不要加斜線
 // 例如：http://yourdomain.epizy.com
-define('BASE_URL', 'http://localhost/your_project_folder');
-
-// --- 安全性設定 ---
-// 請將 'YOUR_GOOGLE_API_KEY' 替換為您自己的 Google Safe Browsing API 金鑰
-define('GOOGLE_API_KEY', 'YOUR_GOOGLE_API_KEY');
-
-// 頻率限制：每分鐘最多允許生成的次數
-define('RATE_LIMIT_PER_MINUTE', 6);
+define('BASE_URL', 'https://link.fwh.is');
 
 // --- 自動化腳本密鑰 ---
 // 請將 'YOUR_VERY_SECRET_KEY' 替換為一個複雜的隨機字串
-define('CRON_SECRET_KEY', 'YOUR_VERY_SECRET_KEY');
+define('CRON_SECRET_KEY', 'Ping$hun_9750');
+
+// --- 安全性設定 ---
+// 請將 'YOUR_GOOGLE_API_KEY' 替換為您自己的 Google Safe Browsing API 金鑰
+define('GOOGLE_API_KEY', 'AIzaSyDUFzgKKyw_rtCbcMRlhYcoEquOeGT9kYU');
+
+// 頻率限制：每分鐘最多允許生成的次數
+define('RATE_LIMIT_PER_MINUTE', 6);
 
 // --- CSRF 防護 ---
 // 生成 CSRF Token（存入 session）
