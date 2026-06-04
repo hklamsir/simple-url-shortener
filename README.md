@@ -49,6 +49,7 @@
 4.  **上傳檔案**:
     * 將專案的所有檔案（除了 `.git` 資料夾和 `config.sample.php`）上傳至您的網站伺服器。
     * 確保您的 Apache 伺服器已啟用 `mod_rewrite` 模組。
+    * 將 htaccess 重新命名為 .htaccess 才上傳
 
 5.  **首次登入與密碼重設**:
     * 訪問 `http://您的網域/admin`。
